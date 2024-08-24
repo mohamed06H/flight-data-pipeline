@@ -23,3 +23,8 @@ variable "cidr_blocks_bastion_host" {
   type = list(string)
   default = ["10.0.4.0/24"]
 }
+
+variable "cidr_blocks_ec2_data_producer" {
+  type = list(string)
+  default = ["10.0.5.0/24"]
+}

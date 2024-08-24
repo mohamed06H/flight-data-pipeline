@@ -117,6 +117,13 @@ resource "aws_subnet" "bastion_host_subnet" {
   availability_zone       = data.aws_availability_zones.available.names[0]
 }
 
+resource "aws_subnet" "ec2_data_producer_subnet" {
+  vpc_id                  = aws_vpc.default.id
+  cidr_block              = var.cidr_blocks_ec2_data_producer[0]
+  map_public_ip_on_launch = false
+  availability_zone       = data.aws_availability_zones.available.names[0]
+}
+
 ################################################################################
 # Security groups
 ################################################################################
@@ -128,7 +135,7 @@ resource "aws_security_group" "kafka" {
     from_port   = 0
     to_port     = 9092
     protocol    = "TCP"
-    cidr_blocks = var.private_cidr_blocks
+    cidr_blocks = concat(var.private_cidr_blocks, var.cidr_blocks_ec2_data_producer)
   }
   ingress {
     from_port   = 0
@@ -148,6 +155,29 @@ resource "aws_security_group" "bastion_host" {
   name   = "${var.global_prefix}-bastion-host"
   vpc_id = aws_vpc.default.id
   ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "ec2_data_producer" {
+  name   = "${var.global_prefix}-ec2-data-producer"
+  vpc_id = aws_vpc.default.id
+  ingress {
+    from_port   = 9092
+    to_port     = 9092
+    protocol    = "TCP"
+    cidr_blocks = concat(var.private_cidr_blocks, var.cidr_blocks_ec2_data_producer)
+  }
+  ingress { # for debug
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -186,6 +216,37 @@ resource "null_resource" "private_key_permissions" {
 }
 
 ################################################################################
+# IAM
+################################################################################
+
+resource "aws_iam_role" "data_producer_role" {
+  name = "${var.global_prefix}-data-producer-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "data_producer_policy" {
+  role       = aws_iam_role.data_producer_role.name
+  policy_arn  = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+}
+
+resource "aws_iam_instance_profile" "data_producer_instance_profile" {
+  name = "${var.global_prefix}-data-producer-instance-profile"
+  role = aws_iam_role.data_producer_role.name
+}
+
+################################################################################
 # Client Machine (EC2)
 ################################################################################
 
@@ -201,8 +262,71 @@ resource "aws_instance" "bastion_host" {
     bootstrap_server_2 = split(",", aws_msk_cluster.kafka.bootstrap_brokers)[1]
     bootstrap_server_3 = split(",", aws_msk_cluster.kafka.bootstrap_brokers)[2]
   })
+  tags = {
+    Name = "${var.global_prefix}-BastionHostInstance"
+  }
   root_block_device {
     volume_type = "gp2"
     volume_size = 100 # production value: 100
   }
+}
+
+################################################################################
+# S3
+################################################################################
+/*
+resource "aws_s3_bucket_acl" "data_bucket_acl" {
+  bucket = aws_s3_bucket.data_bucket.id
+  acl    = "private"
+}
+
+*/
+
+resource "aws_s3_bucket" "data_bucket" {
+  bucket = "${var.global_prefix}-data-bucket"
+
+  tags = {
+    Name = "DataProducerBucket"
+  }
+}
+
+resource "aws_s3_object" "data_producer_script" {
+  bucket = aws_s3_bucket.data_bucket.bucket
+  key    = "code/data_producer.py"
+  source = "code/data_producer.py"
+}
+
+
+
+################################################################################
+# Data Producer Machine (EC2)
+################################################################################
+
+resource "aws_instance" "data_producer" {
+  depends_on = [aws_s3_bucket.data_bucket, aws_msk_cluster.kafka]
+  ami                    = data.aws_ami.amazon_linux_2023.id
+  instance_type          = "t2.micro"
+  key_name               = aws_key_pair.private_key.key_name
+  subnet_id              = aws_subnet.ec2_data_producer_subnet.id
+  vpc_security_group_ids = [aws_security_group.ec2_data_producer.id]
+  # Use templatefile to inject variables into user data
+  user_data = templatefile("data_producer_user_data.sh", {
+    S3_DATA_BUCKET    = aws_s3_bucket.data_bucket.bucket
+    S3_USER_DATA_PATH = aws_s3_object.data_producer_script.key
+    BOOTSTRAP_SERVERS = aws_msk_cluster.kafka.bootstrap_brokers
+    SECURITY_PROTOCOL = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
+
+
+  })
+  iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name
+
+  tags = {
+    Name = "${var.global_prefix}-DataProducerInstance"
+  }
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = 50
+  }
+
 }

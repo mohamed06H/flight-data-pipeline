@@ -99,3 +99,15 @@ terraform destroy
 ```
 
 *Remember to always be under the `terraform` directory when running terraform commands.*
+
+
+## SSH from Bastion Host to EC2 Data Producer
+``` bash
+# Securely transfer the Private key from local file to the Bastion Host
+scp -i "path/to/bastion_host_private_key.pem" path/to/data_producer_private_key.pem ec2-user@<bastion_host_public_ip>:/home/ec2-user/
+scp -i /home/mh06/projects/flight-data-pipeline/cert.pem /home/mh06/projects/flight-data-pipeline/cert.pem ec2-user@3.253.114.180:/home/ec2-user/
+cert.pem
+# SSH into the EC2 instance
+ssh -i "data_producer_private_key.pem" ec2-user@<data_producer_private_ip>
+
+```
