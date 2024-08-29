@@ -7,16 +7,16 @@ from datetime import datetime
 from confluent_kafka import Producer
 
 
-# Read Kafka configuration from command-line arguments
-if len(sys.argv) < 3:
-    print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL>")
+# Read Kafka configuration and API KEY from command-line arguments
+if len(sys.argv) < 4:
+    print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL> <SKYSCANNER_API_KEY>")
     sys.exit(1)
 
 bootstrap_servers = sys.argv[1]
 security_protocol = sys.argv[2]
+SKYSCANNER_API_KEY = sys.argv[3]
 
 # API configuration
-API_KEY = "689519fe9bmsh551d4b6d7753298p1ff659jsnc4d424b4632f"
 API_URL = "sky-scrapper.p.rapidapi.com"
 originSkyId = "LOND"
 originEntityId = "27544008"
@@ -36,7 +36,7 @@ def request_data():
     conn = http.client.HTTPSConnection(API_URL)
 
     headers = {
-        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-key': SKYSCANNER_API_KEY,
         'x-rapidapi-host': API_URL
     }
 
@@ -72,6 +72,7 @@ def request_data():
     conn.close()
 
     return data
+
 
 # Kafka configuration
 kafka_config = {

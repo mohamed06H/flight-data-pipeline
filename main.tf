@@ -333,10 +333,11 @@ resource "aws_instance" "data_producer" {
   vpc_security_group_ids = [aws_security_group.ec2_data_producer.id]
   # Use templatefile to inject variables into user data
   user_data = templatefile("data_producer_user_data.sh", {
-    GITHUB_REPO_URL   = "https://github.com/mohamed06H/flight-data-pipeline.git"
-    CLONE_DIR         = "/home/ec2-user/flight-data-pipeline"
-    BOOTSTRAP_SERVERS = aws_msk_cluster.kafka.bootstrap_brokers
-    SECURITY_PROTOCOL = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
+    GITHUB_REPO_URL    = "https://github.com/mohamed06H/flight-data-pipeline.git"
+    CLONE_DIR          = "/home/ec2-user/flight-data-pipeline"
+    BOOTSTRAP_SERVERS  = aws_msk_cluster.kafka.bootstrap_brokers
+    SECURITY_PROTOCOL  = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
+    SKYSCANNER_API_KEY = var.SKYSCANNER_API_KEY
   })
 
   # iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name

@@ -19,10 +19,10 @@ echo 'export SECURITY_PROTOCOL="${SECURITY_PROTOCOL}"' >> /home/ec2-user/.bash_p
 source /home/ec2-user/.bash_profile
 
 # Clone the GitHub repository
-git clone $GITHUB_REPO_URL $CLONE_DIR
+git clone "${GITHUB_REPO_URL}" "${CLONE_DIR}"
 
 # Navigate to the cloned repository directory
-cd $CLONE_DIR
+cd "${CLONE_DIR}"
 
 git checkout develop # debug
 
@@ -36,9 +36,9 @@ pip3 install confluent_kafka_package/*.whl
 chmod +x code/data_producer.py
 
 # Run the script once to test it, passing the environment variables as arguments
-python3 code/data_producer.py "${BOOTSTRAP_SERVERS}" "${SECURITY_PROTOCOL}"
+python3 code/data_producer.py "${BOOTSTRAP_SERVERS}" "${SECURITY_PROTOCOL}" "${SKYSCANNER_API_KEY}"
 
 # Add cron jobs to the crontab for the ec2-user
 # Run every minute and at reboot, passing the environment variables as arguments
-(crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 $CLONE_DIR/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" >> /home/ec2-user/data_producer.log 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 $CLONE_DIR/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" >> /home/ec2-user/data_producer.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 "${CLONE_DIR}"/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" \"${SKYSCANNER_API_KEY}\"  >> /home/ec2-user/data_producer.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 "${CLONE_DIR}"/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" \"${SKYSCANNER_API_KEY}\" >> /home/ec2-user/data_producer.log 2>&1") | crontab -

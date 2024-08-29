@@ -114,3 +114,8 @@ ssh -i "data_producer_private_key.pem" ec2-user@<data_producer_private_ip>
 
 kafka-topics.sh --list --bootstrap-server $(cat bootstrap-servers)
 
+provide API KEY
+Put your api key in production.tfvars file:
+SKYSCANNER_API_KEY = "your_skyscanner_api_key"
+
+
