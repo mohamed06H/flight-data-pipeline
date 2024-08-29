@@ -1,22 +1,19 @@
 import os
-import subprocess
+import sys
 import http.client
-import time
 import urllib.parse
 import json
 from datetime import datetime
 from confluent_kafka import Producer
 
-# Source environment variables
-command = ['source', '/home/ec2_user/.bash_profile']
 
-result = subprocess.run(command, shell=True, text=True, capture_output=True)
+# Read Kafka configuration from command-line arguments
+if len(sys.argv) < 3:
+    print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL>")
+    sys.exit(1)
 
-# Check the result
-if result.returncode == 0:
-    print("- Command executed successfully")
-else:
-    print("- Command failed with return code", result.returncode)
+bootstrap_servers = sys.argv[1]
+security_protocol = sys.argv[2]
 
 # API configuration
 API_KEY = "689519fe9bmsh551d4b6d7753298p1ff659jsnc4d424b4632f"
@@ -32,6 +29,7 @@ sortBy = "best"
 currency = "USD"
 market = "en-US"
 countryCode = "US"
+
 
 # Function to request data from API
 def request_data():
@@ -75,10 +73,6 @@ def request_data():
 
     return data
 
-# Retrieve Kafka configuration from environment variables
-bootstrap_servers = os.environ.get('BOOTSTRAP_SERVERS')
-security_protocol = os.environ.get('SECURITY_PROTOCOL', 'PLAINTEXT')  # Default to PLAINTEXT if not set
-
 # Kafka configuration
 kafka_config = {
     'bootstrap.servers': bootstrap_servers,
@@ -91,10 +85,12 @@ kafka_topic = 'flight-kafka-topic'
 # Create a Kafka producer instance
 producer = Producer(kafka_config)
 
+
 # Function to send message to Kafka
 def send_to_kafka(topic, message):
     producer.produce(topic, value=message)
     producer.flush()
+
 
 # Request data from API
 data = request_data()
