@@ -1,4 +1,3 @@
-import os
 import sys
 import http.client
 import urllib.parse
