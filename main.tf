@@ -10,7 +10,7 @@ resource "aws_cloudwatch_log_group" "kafka_log_group" {
 }
 
 resource "aws_msk_configuration" "kafka_config" {
-  kafka_versions    = ["2.8.1"] # the recomended one at https://docs.aws.amazon.com/msk/latest/developerguide/supported-kafka-versions.html
+  kafka_versions    = ["2.8.1"] # 3.5.1 the recomended one at https://docs.aws.amazon.com/msk/latest/developerguide/supported-kafka-versions.html
   name              = "${var.global_prefix}-config"
   server_properties = <<EOF
 auto.create.topics.enable = true
@@ -67,6 +67,15 @@ resource "aws_msk_cluster" "kafka" {
 ################################################################################
 # General
 ################################################################################
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  route_table_ids   = [aws_route_table.private_route_table.id]
+
+  tags = {
+    Name = "${var.global_prefix}-S3Endpoint"
+  }
+}
 
 resource "aws_vpc" "default" {
   cidr_block           = "10.0.0.0/16"
@@ -97,6 +106,12 @@ resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = element(aws_subnet.private_subnet.*.id, count.index)
   route_table_id = aws_route_table.private_route_table.id
 }
+/*
+resource "aws_route_table_association" "ec2_data_producer_subnet_association" {
+  subnet_id      = aws_subnet.ec2_data_producer_subnet.id
+  route_table_id = aws_route_table.private_route_table.id
+}
+ */
 
 ################################################################################
 # Subnets
@@ -120,7 +135,7 @@ resource "aws_subnet" "bastion_host_subnet" {
 resource "aws_subnet" "ec2_data_producer_subnet" {
   vpc_id                  = aws_vpc.default.id
   cidr_block              = var.cidr_blocks_ec2_data_producer[0]
-  map_public_ip_on_launch = false
+  map_public_ip_on_launch = true
   availability_zone       = data.aws_availability_zones.available.names[0]
 }
 
@@ -135,7 +150,7 @@ resource "aws_security_group" "kafka" {
     from_port   = 0
     to_port     = 9092
     protocol    = "TCP"
-    cidr_blocks = concat(var.private_cidr_blocks, var.cidr_blocks_ec2_data_producer)
+    cidr_blocks = var.private_cidr_blocks
   }
   ingress {
     from_port   = 0
@@ -143,6 +158,13 @@ resource "aws_security_group" "kafka" {
     protocol    = "TCP"
     cidr_blocks = var.cidr_blocks_bastion_host
   }
+  ingress {
+      from_port   = 0
+      to_port     = 9092
+      protocol    = "TCP"
+      cidr_blocks = var.cidr_blocks_ec2_data_producer
+    }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -171,13 +193,15 @@ resource "aws_security_group" "bastion_host" {
 resource "aws_security_group" "ec2_data_producer" {
   name   = "${var.global_prefix}-ec2-data-producer"
   vpc_id = aws_vpc.default.id
+  /*
   ingress {
     from_port   = 9092
     to_port     = 9092
     protocol    = "TCP"
-    cidr_blocks = concat(var.private_cidr_blocks, var.cidr_blocks_ec2_data_producer)
+    cidr_blocks = var.private_cidr_blocks
   }
-  ingress { # for debug
+   */
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -267,20 +291,13 @@ resource "aws_instance" "bastion_host" {
   }
   root_block_device {
     volume_type = "gp2"
-    volume_size = 100 # production value: 100
+    volume_size = 45
   }
 }
 
 ################################################################################
 # S3
 ################################################################################
-/*
-resource "aws_s3_bucket_acl" "data_bucket_acl" {
-  bucket = aws_s3_bucket.data_bucket.id
-  acl    = "private"
-}
-
-*/
 
 resource "aws_s3_bucket" "data_bucket" {
   bucket = "${var.global_prefix}-data-bucket"
@@ -296,14 +313,18 @@ resource "aws_s3_object" "data_producer_script" {
   source = "code/data_producer.py"
 }
 
-
+resource "aws_s3_object" "kafka_package" {
+  bucket = aws_s3_bucket.data_bucket.bucket
+  key    = "confluent_kafka_package/confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl"
+  source = "confluent_kafka_package/confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl"
+}
 
 ################################################################################
 # Data Producer Machine (EC2)
 ################################################################################
 
 resource "aws_instance" "data_producer" {
-  depends_on = [aws_s3_bucket.data_bucket, aws_msk_cluster.kafka]
+  depends_on = [aws_msk_cluster.kafka, aws_s3_object.kafka_package, aws_s3_object.data_producer_script]
   ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.private_key.key_name
@@ -312,12 +333,12 @@ resource "aws_instance" "data_producer" {
   # Use templatefile to inject variables into user data
   user_data = templatefile("data_producer_user_data.sh", {
     S3_DATA_BUCKET    = aws_s3_bucket.data_bucket.bucket
-    S3_USER_DATA_PATH = aws_s3_object.data_producer_script.key
+    S3_DATA_PRODUCER_PATH = aws_s3_object.data_producer_script.key
+    S3_KAFKA_PACKAGE_PATH = aws_s3_object.kafka_package.key
     BOOTSTRAP_SERVERS = aws_msk_cluster.kafka.bootstrap_brokers
     SECURITY_PROTOCOL = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
-
-
   })
+
   iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name
 
   tags = {
@@ -326,7 +347,7 @@ resource "aws_instance" "data_producer" {
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = 50
+    volume_size = 45
   }
 
 }

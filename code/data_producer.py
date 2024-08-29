@@ -1,8 +1,8 @@
 import os
 import http.client
+import time
 import urllib.parse
 import json
-import time
 from datetime import datetime
 from confluent_kafka import Producer
 
@@ -18,9 +18,8 @@ cabinClass = "economy"
 adults = "1"
 sortBy = "best"
 currency = "USD"
-market = "en - US"
+market = "en-US"
 countryCode = "US"
-
 
 # Function to request data from API
 def request_data():
@@ -52,20 +51,17 @@ def request_data():
     # Construct the URL with the encoded query string
     url = f"/api/v2/flights/searchFlights?{query_string}"
 
-    conn.request(method="GET",
-                 url=url,
-                 headers=headers)
+    conn.request(method="GET", url=url, headers=headers)
 
     res = conn.getresponse()
     data = res.read()
 
-    print(data.decode("utf-8"))
+    print("Data is read successfully from API ", time.time())
 
     # Close the connection
     conn.close()
 
     return data
-
 
 # Retrieve Kafka configuration from environment variables
 bootstrap_servers = os.environ.get('BOOTSTRAP_SERVERS')
@@ -73,51 +69,31 @@ security_protocol = os.environ.get('SECURITY_PROTOCOL', 'PLAINTEXT')  # Default 
 
 # Kafka configuration
 kafka_config = {
-    'bootstrap.servers': bootstrap_servers
+    'bootstrap.servers': bootstrap_servers,
     'client.id': 'data-producer-client',
-    'security.protocol': security_protocol
+    'security.protocol': security_protocol,
+    'max.request.size': 5242880  # 5 MB
 }
 kafka_topic = 'flight-kafka-topic'
 
 # Create a Kafka producer instance
 producer = Producer(kafka_config)
 
-
 # Function to send message to Kafka
 def send_to_kafka(topic, message):
     producer.produce(topic, value=message)
     producer.flush()
 
+# Request data from API
+data = request_data()
 
-# Initialize request counter and date tracking
-request_count = 0
-current_date = datetime.now().date()
+# Parse the response (if JSON)
+parsed_data = json.loads(data)
 
-while True:
-    # Check if the date has changed to reset the counter
-    if datetime.now().date() != current_date:
-        request_count = 0
-        current_date = datetime.now().date()
+# Convert parsed data back to JSON string for Kafka
+json_message = json.dumps(parsed_data)
 
-    if request_count < 10:
-        # Request data from API
-        data = request_data()
+# Send the response to the Kafka topic
+send_to_kafka(kafka_topic, json_message)
 
-        # Parse the response (if JSON)
-        parsed_data = json.loads(data)
-
-        # Convert parsed data back to JSON string for Kafka
-        json_message = json.dumps(parsed_data)
-
-        # Send the response to the Kafka topic
-        send_to_kafka(kafka_topic, json_message)
-
-        print(f"Sent message to Kafka topic '{kafka_topic}'")
-
-        # Increment the request counter
-        request_count += 1
-    else:
-        print("Request limit reached for the day. Waiting until tomorrow.")
-
-    # Sleep for 1 minute
-    time.sleep(60)
+print(f"Sent message to Kafka topic '{kafka_topic}'")

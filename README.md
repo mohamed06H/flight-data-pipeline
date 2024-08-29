@@ -111,3 +111,6 @@ cert.pem
 ssh -i "data_producer_private_key.pem" ec2-user@<data_producer_private_ip>
 
 ```
+
+kafka-topics.sh --list --bootstrap-server $(cat bootstrap-servers)
+
