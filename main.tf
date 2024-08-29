@@ -67,6 +67,7 @@ resource "aws_msk_cluster" "kafka" {
 ################################################################################
 # General
 ################################################################################
+/*
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -76,7 +77,7 @@ resource "aws_vpc_endpoint" "s3" {
     Name = "${var.global_prefix}-S3Endpoint"
   }
 }
-
+*/
 resource "aws_vpc" "default" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -242,7 +243,7 @@ resource "null_resource" "private_key_permissions" {
 ################################################################################
 # IAM
 ################################################################################
-
+/*
 resource "aws_iam_role" "data_producer_role" {
   name = "${var.global_prefix}-data-producer-role"
 
@@ -269,7 +270,7 @@ resource "aws_iam_instance_profile" "data_producer_instance_profile" {
   name = "${var.global_prefix}-data-producer-instance-profile"
   role = aws_iam_role.data_producer_role.name
 }
-
+*/
 ################################################################################
 # Client Machine (EC2)
 ################################################################################
@@ -298,7 +299,7 @@ resource "aws_instance" "bastion_host" {
 ################################################################################
 # S3
 ################################################################################
-
+/*
 resource "aws_s3_bucket" "data_bucket" {
   bucket = "${var.global_prefix}-data-bucket"
 
@@ -318,7 +319,7 @@ resource "aws_s3_object" "kafka_package" {
   key    = "confluent_kafka_package/confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl"
   source = "confluent_kafka_package/confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl"
 }
-
+*/
 ################################################################################
 # Data Producer Machine (EC2)
 ################################################################################
@@ -332,9 +333,8 @@ resource "aws_instance" "data_producer" {
   vpc_security_group_ids = [aws_security_group.ec2_data_producer.id]
   # Use templatefile to inject variables into user data
   user_data = templatefile("data_producer_user_data.sh", {
-    S3_DATA_BUCKET    = aws_s3_bucket.data_bucket.bucket
-    S3_DATA_PRODUCER_PATH = aws_s3_object.data_producer_script.key
-    S3_KAFKA_PACKAGE_PATH = aws_s3_object.kafka_package.key
+    GITHUB_REPO_URL   = "https://github.com/mohamed06H/flight-data-pipeline.git"
+    CLONE_DIR         = "/home/ec2-user/flight-data-pipeline"
     BOOTSTRAP_SERVERS = aws_msk_cluster.kafka.bootstrap_brokers
     SECURITY_PROTOCOL = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
   })
