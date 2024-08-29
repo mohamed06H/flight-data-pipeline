@@ -22,7 +22,7 @@ source /home/ec2-user/.bash_profile
 git clone "${GITHUB_REPO_URL}" "${CLONE_DIR}"
 
 # Navigate to the cloned repository directory
-cd "${CLONE_DIR}"
+cd "${CLONE_DIR}" || exit
 
 git checkout develop # debug
 
