@@ -1,10 +1,22 @@
 import os
+import subprocess
 import http.client
 import time
 import urllib.parse
 import json
 from datetime import datetime
 from confluent_kafka import Producer
+
+# Source environment variables
+command = ['source', '/home/ec2_user/.bash_profile']
+
+result = subprocess.run(command, shell=True, text=True, capture_output=True)
+
+# Check the result
+if result.returncode == 0:
+    print("- Command executed successfully")
+else:
+    print("- Command failed with return code", result.returncode)
 
 # API configuration
 API_KEY = "689519fe9bmsh551d4b6d7753298p1ff659jsnc4d424b4632f"
@@ -56,7 +68,7 @@ def request_data():
     res = conn.getresponse()
     data = res.read()
 
-    print("Data is read successfully from API ", time.time())
+    print("-- Data is read successfully from API ", datetime.now())
 
     # Close the connection
     conn.close()
@@ -87,7 +99,7 @@ def send_to_kafka(topic, message):
 # Request data from API
 data = request_data()
 
-# Parse the response (if JSON)
+# Parse the response
 parsed_data = json.loads(data)
 
 # Convert parsed data back to JSON string for Kafka
@@ -96,4 +108,4 @@ json_message = json.dumps(parsed_data)
 # Send the response to the Kafka topic
 send_to_kafka(kafka_topic, json_message)
 
-print(f"Sent message to Kafka topic '{kafka_topic}'")
+print(f"--- Sent message to Kafka topic '{kafka_topic}'")
