@@ -3,15 +3,12 @@
 # Update system packages
 yum update -y
 
-# Install the cron service (cronie package)
-yum install -y cronie
+# Install Python 3 pip git cronie
+sudo yum install -y python3 python3-pip git cronie
 
 # Start and enable the cron service
 service crond start
 chkconfig crond on
-
-# Install Python 3 and pip
-sudo yum install -y python3 python3-pip
 
 # Add environment variables to .bash_profile
 echo 'export GITHUB_REPO_URL="${GITHUB_REPO_URL}"' >> /home/ec2-user/.bash_profile
@@ -26,6 +23,8 @@ source /home/ec2-user/.bash_profile
 #GITHUB_REPO_URL="https://github.com/mohamed06H/flight-data-pipeline.git"
 #CLONE_DIR="/home/ec2-user/flight-data-pipeline"
 git clone $GITHUB_REPO_URL $CLONE_DIR
+
+git checkout develop # debug
 
 # Navigate to the cloned repository directory
 cd $CLONE_DIR
