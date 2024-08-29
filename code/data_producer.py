@@ -72,7 +72,7 @@ kafka_config = {
     'bootstrap.servers': bootstrap_servers,
     'client.id': 'data-producer-client',
     'security.protocol': security_protocol,
-    'max.request.size': 5242880  # 5 MB
+    'message.max.bytes': 5242880  # 5 MB
 }
 kafka_topic = 'flight-kafka-topic'
 

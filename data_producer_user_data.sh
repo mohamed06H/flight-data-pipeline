@@ -24,24 +24,24 @@ source /home/ec2-user/.bash_profile
 #CLONE_DIR="/home/ec2-user/flight-data-pipeline"
 git clone $GITHUB_REPO_URL $CLONE_DIR
 
-git checkout develop # debug
-
 # Navigate to the cloned repository directory
 cd $CLONE_DIR
 
+git checkout develop # debug
+
 # Make sure the package is executable
-chmod +x $CLONE_DIR/confluent_kafka_package/*.whl
+chmod +x confluent_kafka_package/*.whl
 
 # Install the confluent-kafka package from the wheel file
-pip3 install $CLONE_DIR/confluent_kafka_package/*.whl
+pip3 install confluent_kafka_package/*.whl
 
 # Ensure the script is executable
-chmod +x data_producer.py
+chmod +x code/data_producer.py
 
 # Run the script once to test it
-python3 data_producer.py
+python3 code/data_producer.py
 
 # Add cron jobs to the crontab for the ec2-user
 # Run every minute and at reboot
-(crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 $CLONE_DIR/data_producer.py >> /home/ec2-user/data_producer.log 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 $CLONE_DIR/data_producer.py >> /home/ec2-user/data_producer.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 $CLONE_DIR/code/data_producer.py >> /home/ec2-user/data_producer.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 $CLONE_DIR/code/data_producer.py >> /home/ec2-user/data_producer.log 2>&1") | crontab -
