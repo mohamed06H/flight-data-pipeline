@@ -325,7 +325,7 @@ resource "aws_s3_object" "kafka_package" {
 ################################################################################
 
 resource "aws_instance" "data_producer" {
-  depends_on = [aws_msk_cluster.kafka, aws_s3_object.kafka_package, aws_s3_object.data_producer_script]
+  depends_on = [aws_msk_cluster.kafka] # , aws_s3_object.kafka_package, aws_s3_object.data_producer_script
   ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.private_key.key_name
@@ -333,13 +333,13 @@ resource "aws_instance" "data_producer" {
   vpc_security_group_ids = [aws_security_group.ec2_data_producer.id]
   # Use templatefile to inject variables into user data
   user_data = templatefile("data_producer_user_data.sh", {
-    GITHUB_REPO_URL   = "https://github.com/mohamed06H/flight-data-pipeline.git//tree/develop"
+    GITHUB_REPO_URL   = "https://github.com/mohamed06H/flight-data-pipeline.git/tree/develop"
     CLONE_DIR         = "/home/ec2-user/flight-data-pipeline"
     BOOTSTRAP_SERVERS = aws_msk_cluster.kafka.bootstrap_brokers
     SECURITY_PROTOCOL = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
   })
 
-  iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name
+  # iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name
 
   tags = {
     Name = "${var.global_prefix}-DataProducerInstance"

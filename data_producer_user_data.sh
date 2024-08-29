@@ -14,11 +14,7 @@ chkconfig crond on
 sudo yum install -y python3 python3-pip
 
 # Add environment variables to .bash_profile
-#echo 'export S3_DATA_BUCKET="${S3_DATA_BUCKET}"' >> /home/ec2-user/.bash_profile
-#echo 'export S3_DATA_PRODUCER_PATH="${S3_DATA_PRODUCER_PATH}"' >> /home/ec2-user/.bash_profile
-#echo 'export S3_KAFKA_PACKAGE_PATH="${S3_KAFKA_PACKAGE_PATH}"' >> /home/ec2-user/.bash_profile
-
-echo 'export $GITHUB_REPO_URL="${$GITHUB_REPO_URL}"' >> /home/ec2-user/.bash_profile
+echo 'export GITHUB_REPO_URL="${GITHUB_REPO_URL}"' >> /home/ec2-user/.bash_profile
 echo 'export CLONE_DIR="${CLONE_DIR}"' >> /home/ec2-user/.bash_profile
 echo 'export BOOTSTRAP_SERVERS="${BOOTSTRAP_SERVERS}"' >> /home/ec2-user/.bash_profile
 echo 'export SECURITY_PROTOCOL="${SECURITY_PROTOCOL}"' >> /home/ec2-user/.bash_profile
