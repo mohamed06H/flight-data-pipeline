@@ -10,14 +10,6 @@ sudo yum install -y python3 python3-pip git cronie
 service crond start
 chkconfig crond on
 
-# Add environment variables to .bash_profile (optional)
-echo 'export GITHUB_REPO_URL="${GITHUB_REPO_URL}"' >> /home/ec2-user/.bash_profile
-echo 'export CLONE_DIR="${CLONE_DIR}"' >> /home/ec2-user/.bash_profile
-echo 'export BOOTSTRAP_SERVERS="${BOOTSTRAP_SERVERS}"' >> /home/ec2-user/.bash_profile
-echo 'export SECURITY_PROTOCOL="${SECURITY_PROTOCOL}"' >> /home/ec2-user/.bash_profile
-
-# source /home/ec2-user/.bash_profile
-
 # Clone the GitHub repository
 git clone "${GITHUB_REPO_URL}" "${CLONE_DIR}"
 

@@ -64,8 +64,14 @@ def request_data():
 
     res = conn.getresponse()
     data = res.read()
-
-    print("-- Data is read successfully from API ", datetime.now())
+    if data == 'b{}':
+        data = json.dumps({"empty_response": True})
+        print("-- Empty response from API please check your subscription plan", datetime.now())
+    elif data is not None:
+        print("-- Data is read successfully from API ", datetime.now())
+    else:
+        print("Data is None !")
+        data = json.dumps({"None response": True})
 
     # Close the connection
     conn.close()

@@ -113,6 +113,7 @@ ssh -i "data_producer_private_key.pem" ec2-user@<data_producer_private_ip>
 ```
 
 kafka-topics.sh --list --bootstrap-server $(cat bootstrap-servers)
+ /kafka_2.13-3.4.0/bin/kafka-console-consumer.sh  --bootstrap-server $(cat bootstrap-servers) --topic flight-kafka-topic
 
 provide API KEY
 Put your api key in production.tfvars file:
