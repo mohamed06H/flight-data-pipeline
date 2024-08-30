@@ -4,4 +4,4 @@ terraform/*.tfstate*
 terraform/*.hcl
 cert.pem
 terraform/production.auto.tfvars
-confluent_kafka_package/*
+confluent_kafka_package/
