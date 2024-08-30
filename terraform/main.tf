@@ -234,7 +234,7 @@ resource "local_file" "private_key" {
 resource "null_resource" "private_key_permissions" {
   depends_on = [local_file.private_key]
   provisioner "local-exec" {
-    command     = "chmod 600 cert.pem"
+    command     = "chmod 400 cert.pem"
     interpreter = ["bash", "-c"]
     on_failure  = continue
   }

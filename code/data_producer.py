@@ -1,4 +1,3 @@
-import os
 import sys
 import http.client
 import urllib.parse
@@ -63,13 +62,23 @@ def request_data():
 
     conn.request(method="GET", url=url, headers=headers)
 
-    res = conn.getresponse()
-    data = res.read()
+    try:
+        res = conn.getresponse()
+        data = res.read().decode('utf-8')  # Decode byte data to string
 
-    print("-- Data is read successfully from API ", datetime.now())
+        if not data or data == '{}':
+            data = json.dumps({"Empty_response": str(datetime.now())})
+            print("-- Empty response from API, please check your subscription plan", datetime.now())
+        else:
+            print("-- Data is read successfully from API", datetime.now())
 
-    # Close the connection
-    conn.close()
+    except Exception as e:
+        data = json.dumps({"Error": str(e), "timestamp": str(datetime.now())})
+        print("Error occurred while reading data from API:", e)
+
+    finally:
+        # Close the connection
+        conn.close()
 
     return data
 
@@ -94,13 +103,7 @@ def send_to_kafka(topic, message):
 
 
 # Request data from API
-data = request_data()
-
-# Parse the response
-parsed_data = json.loads(data)
-
-# Convert parsed data back to JSON string for Kafka
-json_message = json.dumps(parsed_data)
+json_message = request_data()
 
 # Send the response to the Kafka topic
 send_to_kafka(kafka_topic, json_message)
