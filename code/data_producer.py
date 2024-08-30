@@ -99,10 +99,9 @@ def send_to_kafka(topic, message):
 
 
 # Request data from API
-data = request_data()
-
-# Parse the response
-parsed_data = json.loads(data)
+#data = request_data()
+# DEBUG
+parsed_data = {"Time": datetime.now()}
 
 # Convert parsed data back to JSON string for Kafka
 json_message = json.dumps(parsed_data)
