@@ -37,5 +37,5 @@ python3 code/data_producer.py "${BOOTSTRAP_SERVERS}" "${SECURITY_PROTOCOL}" "${S
 
 # Add cron jobs to the crontab for the ec2-user
 # Run every x minutes and at reboot, passing the environment variables as arguments
-(crontab -l 2>/dev/null; echo "*/3 * * * * /usr/bin/python3 "${CLONE_DIR}"/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" \"${SKYSCANNER_API_KEY}\"  >> /home/ec2-user/data_producer.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 "${CLONE_DIR}"/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" \"${SKYSCANNER_API_KEY}\"  >> /home/ec2-user/data_producer.log 2>&1") | crontab -
 (crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 "${CLONE_DIR}"/code/data_producer.py \"${BOOTSTRAP_SERVERS}\" \"${SECURITY_PROTOCOL}\" \"${SKYSCANNER_API_KEY}\" >> /home/ec2-user/data_producer.log 2>&1") | crontab -
