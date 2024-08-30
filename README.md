@@ -120,3 +120,7 @@ Put your api key in production.tfvars file:
 SKYSCANNER_API_KEY = "your_skyscanner_api_key"
 
 
+Temporarily Stop all cron jobs: 
+sudo service crond stop
+Strat cron service
+sudo service crond start

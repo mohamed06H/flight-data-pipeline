@@ -1,6 +1,7 @@
 .idea
-.terraform*
-terraform.tfstate
-terraform.tfstate.backup
+terraform/.terraform
+terraform/*.tfstate*
+terraform/*.hcl
 cert.pem
-production.auto.tfvars
+terraform/production.auto.tfvars
+confluent_kafka_package

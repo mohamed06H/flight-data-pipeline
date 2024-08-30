@@ -27,7 +27,7 @@ cd "${CLONE_DIR}" || exit
 git checkout develop # dev
 
 # Install requirements
-pip3 install -r requirements.txt
+pip3 install -r code/requirements.txt
 
 # Ensure the script is executable
 chmod +x code/data_producer.py
