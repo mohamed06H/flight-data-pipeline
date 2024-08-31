@@ -11,7 +11,7 @@ Tech Stack:
 - [AWS Account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)
 
 ## Requirements
-Do you have a `requirements.txt` file? Or maybe you've used `Poetry` for your dependiencies? Either case, please provide with instructions on how to install the required libraries.
+Do you have a `requirements.txt` file? Or maybe you've used `Poetry` for your dependencies? Either case, please provide with instructions on how to install the required libraries.
 
 ```bash
 Any command to be typed from my CLI?

@@ -67,7 +67,7 @@ resource "aws_msk_cluster" "kafka" {
 ################################################################################
 # General
 ################################################################################
-/*
+
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -77,7 +77,7 @@ resource "aws_vpc_endpoint" "s3" {
     Name = "${var.global_prefix}-S3Endpoint"
   }
 }
-*/
+
 resource "aws_vpc" "default" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -107,12 +107,11 @@ resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = element(aws_subnet.private_subnet.*.id, count.index)
   route_table_id = aws_route_table.private_route_table.id
 }
-/*
-resource "aws_route_table_association" "ec2_data_producer_subnet_association" {
-  subnet_id      = aws_subnet.ec2_data_producer_subnet.id
+
+resource "aws_route_table_association" "kafka_consumer_subnet_association" {
+  subnet_id      = aws_subnet.kafka_consumer_subnet.id
   route_table_id = aws_route_table.private_route_table.id
 }
- */
 
 ################################################################################
 # Subnets
@@ -136,6 +135,13 @@ resource "aws_subnet" "bastion_host_subnet" {
 resource "aws_subnet" "ec2_data_producer_subnet" {
   vpc_id                  = aws_vpc.default.id
   cidr_block              = var.cidr_blocks_ec2_data_producer[0]
+  map_public_ip_on_launch = true
+  availability_zone       = data.aws_availability_zones.available.names[0]
+}
+
+resource "aws_subnet" "kafka_consumer_subnet" {
+  vpc_id                  = aws_vpc.default.id
+  cidr_block              = var.cidr_blocks_kafka_consumer[0]
   map_public_ip_on_launch = true
   availability_zone       = data.aws_availability_zones.available.names[0]
 }
@@ -194,14 +200,23 @@ resource "aws_security_group" "bastion_host" {
 resource "aws_security_group" "ec2_data_producer" {
   name   = "${var.global_prefix}-ec2-data-producer"
   vpc_id = aws_vpc.default.id
-  /*
   ingress {
-    from_port   = 9092
-    to_port     = 9092
-    protocol    = "TCP"
-    cidr_blocks = var.private_cidr_blocks
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-   */
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "kafka_consumer_sg" {
+  name   = "${var.global_prefix}-kafka-consumer-sg"
+  vpc_id = aws_vpc.default.id
   ingress {
     from_port   = 22
     to_port     = 22
@@ -243,34 +258,49 @@ resource "null_resource" "private_key_permissions" {
 ################################################################################
 # IAM
 ################################################################################
-/*
-resource "aws_iam_role" "data_producer_role" {
-  name = "${var.global_prefix}-data-producer-role"
+resource "aws_iam_role" "kafka_consumer_role" {
+  name = "kafka-consumer-role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_policy" "kafka_consumer_policy" {
+  name   = "kafka-consumer-policy"
+  policy = jsonencode({
+    Version = "2012-10-17",
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
+        Effect = "Allow",
+        Action = [
+          "kafka:Consume",
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ],
+        Resource = "*"
+      }
     ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "data_producer_policy" {
-  role       = aws_iam_role.data_producer_role.name
-  policy_arn  = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+resource "aws_iam_role_policy_attachment" "kafka_consumer_policy_attachment" {
+  role       = aws_iam_role.kafka_consumer_role.name
+  policy_arn = aws_iam_policy.kafka_consumer_policy.arn
 }
 
-resource "aws_iam_instance_profile" "data_producer_instance_profile" {
-  name = "${var.global_prefix}-data-producer-instance-profile"
-  role = aws_iam_role.data_producer_role.name
+resource "aws_iam_instance_profile" "kafka_consumer_profile" {
+  name = "kafka-consumer-profile"
+  role = aws_iam_role.kafka_consumer_role.name
 }
-*/
+
 ################################################################################
 # Client Machine (EC2)
 ################################################################################
@@ -299,27 +329,15 @@ resource "aws_instance" "bastion_host" {
 ################################################################################
 # S3
 ################################################################################
-/*
-resource "aws_s3_bucket" "data_bucket" {
-  bucket = "${var.global_prefix}-data-bucket"
+
+resource "aws_s3_bucket" "json_data_bucket" {
+  bucket = "${var.global_prefix}-json-data-bucket"
 
   tags = {
-    Name = "DataProducerBucket"
+    Name = "KafkaJsonDataBucket"
   }
 }
 
-resource "aws_s3_object" "data_producer_script" {
-  bucket = aws_s3_bucket.data_bucket.bucket
-  key    = "code/data_producer.py"
-  source = "code/data_producer.py"
-}
-
-resource "aws_s3_object" "kafka_package" {
-  bucket = aws_s3_bucket.data_bucket.bucket
-  key    = "confluent_kafka_package/confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl"
-  source = "confluent_kafka_package/confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl"
-}
-*/
 ################################################################################
 # Data Producer Machine (EC2)
 ################################################################################
@@ -338,6 +356,7 @@ resource "aws_instance" "data_producer" {
     BOOTSTRAP_SERVERS  = aws_msk_cluster.kafka.bootstrap_brokers
     SECURITY_PROTOCOL  = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
     SKYSCANNER_API_KEY = var.SKYSCANNER_API_KEY
+    TOPIC_NAME = var.TOPIC_NAME
   })
 
   # iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name
@@ -351,4 +370,28 @@ resource "aws_instance" "data_producer" {
     volume_size = 45
   }
 
+}
+
+################################################################################
+# Data Consumer Machine (EC2)
+################################################################################
+resource "aws_instance" "kafka_consumer" {
+  ami                    = data.aws_ami.amazon_linux_2023.id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.kafka_consumer_subnet.id
+  vpc_security_group_ids = [aws_security_group.kafka_consumer_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.kafka_consumer_profile.name
+
+  user_data = templatefile("kafka_consumer_user_data.sh", {
+    GITHUB_REPO_URL    = "https://github.com/mohamed06H/flight-data-pipeline.git"
+    CLONE_DIR          = "/home/ec2-user/kafka-consumer"
+    BOOTSTRAP_SERVERS = aws_msk_cluster.kafka.bootstrap_brokers
+    SECURITY_PROTOCOL = aws_msk_cluster.kafka.encryption_info[0].encryption_in_transit[0].client_broker
+    TOPIC_NAME       = var.TOPIC_NAME
+    S3_BUCKET_NAME    = aws_s3_bucket.json_data_bucket.bucket
+  })
+
+  tags = {
+    Name = "${var.global_prefix}-KafkaConsumerInstance"
+  }
 }
