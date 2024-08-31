@@ -30,5 +30,5 @@ pip3 install -r code/consumer/requirements.txt
 # Ensure the script is executable
 chmod +x code/consumer/kafka_to_s3_consumer.py
 
-# Run the Kafka consumer script, passing the environment variables as arguments
-python3 code/consumer/kafka_to_s3_consumer.py "${BOOTSTRAP_SERVERS}" "${SECURITY_PROTOCOL}" "${TOPIC_NAME}" "${S3_BUCKET_NAME}" &
+# Start the consumer in the background
+nohup python3 code/consumer/kafka_to_s3_consumer.py "${BOOTSTRAP_SERVERS}" "${SECURITY_PROTOCOL}" "${TOPIC_NAME}" "${S3_BUCKET_NAME}" >> /home/ec2-user/kafka_consumer.log 2>&1 &

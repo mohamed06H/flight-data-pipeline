@@ -170,7 +170,13 @@ resource "aws_security_group" "kafka" {
       to_port     = 9092
       protocol    = "TCP"
       cidr_blocks = var.cidr_blocks_ec2_data_producer
-    }
+  }
+  ingress {
+      from_port   = 0
+      to_port     = 9092
+      protocol    = "TCP"
+      cidr_blocks = var.cidr_blocks_kafka_consumer
+  }
 
   egress {
     from_port   = 0
@@ -249,7 +255,7 @@ resource "local_file" "private_key" {
 resource "null_resource" "private_key_permissions" {
   depends_on = [local_file.private_key]
   provisioner "local-exec" {
-    command     = "chmod 600 cert.pem"
+    command     = "chmod 400 cert.pem"
     interpreter = ["bash", "-c"]
     on_failure  = continue
   }
@@ -343,7 +349,7 @@ resource "aws_s3_bucket" "json_data_bucket" {
 ################################################################################
 
 resource "aws_instance" "data_producer" {
-  depends_on = [aws_msk_cluster.kafka] # , aws_s3_object.kafka_package, aws_s3_object.data_producer_script
+  depends_on = [aws_msk_cluster.kafka]
   ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.private_key.key_name
@@ -376,6 +382,7 @@ resource "aws_instance" "data_producer" {
 # Data Consumer Machine (EC2)
 ################################################################################
 resource "aws_instance" "kafka_consumer" {
+  depends_on = [aws_msk_cluster.kafka, aws_instance.data_producer, aws_s3_bucket.json_data_bucket]
   ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.private_key.key_name
