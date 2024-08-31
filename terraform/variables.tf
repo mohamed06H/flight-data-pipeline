@@ -41,7 +41,7 @@ variable "SKYSCANNER_API_KEY" {
 }
 
 variable "TOPIC_NAME" {
-  type    = String
+  type    = string
   default = "flight-kafka-topic"
 }
 

@@ -14,7 +14,7 @@ echo 'export GITHUB_REPO_URL="${GITHUB_REPO_URL}"' >> /home/ec2-user/.bash_profi
 echo 'export CLONE_DIR="${CLONE_DIR}"' >> /home/ec2-user/.bash_profile
 echo 'export BOOTSTRAP_SERVERS="${BOOTSTRAP_SERVERS}"' >> /home/ec2-user/.bash_profile
 echo 'export SECURITY_PROTOCOL="${SECURITY_PROTOCOL}"' >> /home/ec2-user/.bash_profile
-echo 'export KAFKA_TOPIC="${KAFKA_TOPIC}"' >> /home/ec2-user/.bash_profile
+echo 'export TOPIC_NAME="${TOPIC_NAME}"' >> /home/ec2-user/.bash_profile
 echo 'export S3_BUCKET_NAME="${S3_BUCKET_NAME}"' >> /home/ec2-user/.bash_profile
 
 source /home/ec2-user/.bash_profile
