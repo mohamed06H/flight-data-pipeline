@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Update system packages
-yum update -y
+sudo yum update -y
 
 # Install Python 3, pip, git, and cronie
 sudo yum install -y python3 python3-pip git cronie

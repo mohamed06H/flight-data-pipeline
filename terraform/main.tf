@@ -67,7 +67,7 @@ resource "aws_msk_cluster" "kafka" {
 ################################################################################
 # General
 ################################################################################
-
+/*
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -77,7 +77,7 @@ resource "aws_vpc_endpoint" "s3" {
     Name = "${var.global_prefix}-S3Endpoint"
   }
 }
-
+ */
 resource "aws_vpc" "default" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -107,12 +107,12 @@ resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = element(aws_subnet.private_subnet.*.id, count.index)
   route_table_id = aws_route_table.private_route_table.id
 }
-
+/*
 resource "aws_route_table_association" "kafka_consumer_subnet_association" {
   subnet_id      = aws_subnet.kafka_consumer_subnet.id
   route_table_id = aws_route_table.private_route_table.id
 }
-
+*/
 ################################################################################
 # Subnets
 ################################################################################
@@ -249,7 +249,7 @@ resource "local_file" "private_key" {
 resource "null_resource" "private_key_permissions" {
   depends_on = [local_file.private_key]
   provisioner "local-exec" {
-    command     = "chmod 400 cert.pem"
+    command     = "chmod 600 cert.pem"
     interpreter = ["bash", "-c"]
     on_failure  = continue
   }
@@ -378,6 +378,7 @@ resource "aws_instance" "data_producer" {
 resource "aws_instance" "kafka_consumer" {
   ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t2.micro"
+  key_name               = aws_key_pair.private_key.key_name
   subnet_id              = aws_subnet.kafka_consumer_subnet.id
   vpc_security_group_ids = [aws_security_group.kafka_consumer_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.kafka_consumer_profile.name

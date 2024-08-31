@@ -1,13 +1,10 @@
 #!/bin/bash
 
 # Update system packages
-yum update -y
+sudo yum update -y
 
 # Install necessary packages
-yum install -y python3 python3-pip
-
-# Install the confluent-kafka library
-pip3 install confluent_kafka boto3
+sudo yum install -y python3 python3-pip git
 
 # Set environment variables
 echo 'export GITHUB_REPO_URL="${GITHUB_REPO_URL}"' >> /home/ec2-user/.bash_profile
