@@ -45,7 +45,7 @@ terraform plan  # this is optional, it will show you what will be deployed - che
 terraform apply
 ```
 
-It will take around `25 minutes` to complete the deployment. You will see the following output:
+It will take around `35 minutes` to complete the deployment. You will see the following output:
 
 ```bash
 Apply complete! Resources: 34 added, 0 changed, 0 destroyed.
@@ -73,7 +73,7 @@ more bootstrap-servers
 kafka-topics.sh --list --bootstrap-server $(cat bootstrap-servers)
 
 # Consume messages through console: you should see a new message everytime the producer runs the cron job (every minute)
-kafka-console-consumer.sh  --bootstrap-server $(cat bootstrap-servers) --topic flight-kafka-topic
+kafka-console-consumer.sh --bootstrap-server $(cat bootstrap-servers) --topic flight-kafka-topic
 
 Outputs: 
 
@@ -143,7 +143,18 @@ terraform destroy
 
 ## Design
 Provide a diagram of your solution, it can be the same one as in the pdf or one you've done yourself. Explain the diagram.
+![img.png](screenshots/diagram.png)
 
+Data Pipeline workflow:
+
+- The data producer script deployed on an EC2 instance (public subnet) requests the data from the Sky-scrapper API
+- The data producer publishes the responses into a kafka topic
+- The kafka consumer script deployed on a separate EC2 instance (public subnet) subscribes to the kakfa topic and writes back the responses to an S3 bucket.
+
+- AWS Crawler periodically scans the S3 bucket where the data is being stored, infers the schema of the stored data and creates/updates the metadata in the AWS Glue Data Catalog.
+- AWS Glue jobs (ETL Jobs) can be configured to run based on triggers (like the completion of the crawler)
+- The processed data can be stored back in another S3 bucket or in the same bucket but within a different directory or partition.
+- Amazon Athena is used to query the data stored in the S3 bucket.
 ## Developer Guide
 If I was to continue as a developer with the work you've just done, which things are essential for me to know in order to be able to do so?
 Can you provide with step-by-step assistance of what you've done so far with detailed screenshots? If something is not working as it should, this a good place to state that as well.
@@ -198,7 +209,7 @@ If you want to run the ingestion more frequently than 1 minute (every 15 seconds
 Or use a loop inside the script.
 
 ### Improve CI/CD
-The scripts needed to run the data producer and the kafka consumer are both under the `/code` folder.
+The data producer and the kafka consumer scripts are both under the `/code` folder.
 The whole github repository is cloned when setting up the instances, which is a bad idea!
 
 **Solution:**
