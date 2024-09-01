@@ -29,8 +29,20 @@ variable "cidr_blocks_ec2_data_producer" {
   default = ["10.0.5.0/24"]
 }
 
+variable "cidr_blocks_kafka_consumer" {
+  type = list(string)
+  default = ["10.0.6.0/24"]
+}
+
 variable "SKYSCANNER_API_KEY" {
   description = "API key for accessing Skyscanner API"
   type        = string
   sensitive   = true
 }
+
+variable "TOPIC_NAME" {
+  type    = string
+  default = "flight-kafka-topic"
+}
+
+

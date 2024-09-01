@@ -7,13 +7,15 @@ from confluent_kafka import Producer
 
 
 # Read Kafka configuration and API KEY from command-line arguments
-if len(sys.argv) < 4:
-    print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL> <SKYSCANNER_API_KEY>")
+if len(sys.argv) < 5:
+    print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL> <SKYSCANNER_API_KEY> <TOPIC_NAME>")
     sys.exit(1)
 
 bootstrap_servers = sys.argv[1]
 security_protocol = sys.argv[2]
 SKYSCANNER_API_KEY = sys.argv[3]
+kafka_topic = sys.argv[4]
+
 
 # API configuration
 API_URL = "sky-scrapper.p.rapidapi.com"
@@ -90,7 +92,6 @@ kafka_config = {
     'security.protocol': security_protocol,
     'message.max.bytes': 5242880  # 5 MB
 }
-kafka_topic = 'flight-kafka-topic'
 
 # Create a Kafka producer instance
 producer = Producer(kafka_config)
