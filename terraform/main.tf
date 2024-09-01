@@ -10,7 +10,7 @@ resource "aws_cloudwatch_log_group" "kafka_log_group" {
 }
 
 resource "aws_msk_configuration" "kafka_config" {
-  kafka_versions    = ["2.8.1"] # 3.5.1 the recomended one at https://docs.aws.amazon.com/msk/latest/developerguide/supported-kafka-versions.html
+  kafka_versions    = ["2.8.1"] # 3.5.1 the recommended one at https://docs.aws.amazon.com/msk/latest/developerguide/supported-kafka-versions.html
   name              = "${var.global_prefix}-config"
   server_properties = <<EOF
 auto.create.topics.enable = true
@@ -67,17 +67,7 @@ resource "aws_msk_cluster" "kafka" {
 ################################################################################
 # General
 ################################################################################
-/*
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = aws_vpc.default.id
-  service_name      = "com.amazonaws.${var.region}.s3"
-  route_table_ids   = [aws_route_table.private_route_table.id]
 
-  tags = {
-    Name = "${var.global_prefix}-S3Endpoint"
-  }
-}
- */
 resource "aws_vpc" "default" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -107,12 +97,7 @@ resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = element(aws_subnet.private_subnet.*.id, count.index)
   route_table_id = aws_route_table.private_route_table.id
 }
-/*
-resource "aws_route_table_association" "kafka_consumer_subnet_association" {
-  subnet_id      = aws_subnet.kafka_consumer_subnet.id
-  route_table_id = aws_route_table.private_route_table.id
-}
-*/
+
 ################################################################################
 # Subnets
 ################################################################################
@@ -364,8 +349,6 @@ resource "aws_instance" "data_producer" {
     SKYSCANNER_API_KEY = var.SKYSCANNER_API_KEY
     TOPIC_NAME = var.TOPIC_NAME
   })
-
-  # iam_instance_profile   = aws_iam_instance_profile.data_producer_instance_profile.name
 
   tags = {
     Name = "${var.global_prefix}-DataProducerInstance"
