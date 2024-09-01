@@ -104,6 +104,25 @@ sudo service crond start
 
 ## Testing the Kafka Consumer
 
+Connect to the kafka consumer instance and run the following command:
+
+```bash
+# Check kafka consumer log file
+tail -f kafka_consumer.log
+```
+
+Debug the consumer:
+```bash
+# Find the process running the consumer script 
+ps aux | grep kafka_to_s3_consumer.py
+# Kill the process
+sudo kill <PID>
+# Start the consumer again
+nohup python3 $CLONE_DIR/code/consumer/kafka_to_s3_consumer.py $BOOTSTRAP_SERVERS $SECURITY_PROTOCOL $TOPIC_NAME  $S3_BUCKET_NAME >> /home/ec2-user/kafka_consumer.log 2>&1 &
+```
+
+Check the s3 output bucket on your account console:
+
 
 ## Destroying the infrastructure
 

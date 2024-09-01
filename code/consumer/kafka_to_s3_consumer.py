@@ -45,9 +45,9 @@ def write_to_s3(json_data, key):
             Body=json.dumps(json_data),
             ContentType='application/json'
         )
-        logging.info('Successfully wrote to S3: ', key)
+        logging.info(f'Successfully wrote to S3: {key}')
     except Exception as e:
-        logging.info('Failed to write to S3: ', str(e))
+        logging.info(f'Failed to write to S3: str(e)')
 
 
 try:
