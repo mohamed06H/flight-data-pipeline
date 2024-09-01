@@ -250,7 +250,7 @@ resource "null_resource" "private_key_permissions" {
 # IAM
 ################################################################################
 resource "aws_iam_role" "kafka_consumer_role" {
-  name = "kafka-consumer-role"
+  name = "${var.global_prefix}-kafka-consumer-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -265,7 +265,7 @@ resource "aws_iam_role" "kafka_consumer_role" {
 }
 
 resource "aws_iam_policy" "kafka_consumer_policy" {
-  name   = "kafka-consumer-policy"
+  name   = "${var.global_prefix}-kafka-consumer-policy"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -288,7 +288,7 @@ resource "aws_iam_role_policy_attachment" "kafka_consumer_policy_attachment" {
 }
 
 resource "aws_iam_instance_profile" "kafka_consumer_profile" {
-  name = "kafka-consumer-profile"
+  name = "${var.global_prefix}-kafka-consumer-profile"
   role = aws_iam_role.kafka_consumer_role.name
 }
 
