@@ -4,7 +4,7 @@ import json
 import sys
 from datetime import datetime
 
-# Read Kafka configuration and API KEY from command-line arguments
+# Read Kafka and s3 configuration
 if len(sys.argv) < 5:
     print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL> <TOPIC_NAME> <S3_BUCKET_NAME>")
     sys.exit(1)
@@ -34,7 +34,7 @@ s3_client = boto3.client('s3')
 
 def write_to_s3(json_data, key):
     try:
-        response = s3_client.put_object(
+        s3_client.put_object(
             Bucket=s3_bucket,
             Key=key,
             Body=json.dumps(json_data),
