@@ -3,10 +3,15 @@ import boto3
 import json
 import sys
 from datetime import datetime
+import logging
+
+logging.basicConfig(filename='/home/ec2-user/kafka_consumer.log', level=logging.INFO)
+logging.info('Starting Kafka to S3 Consumer Script')
+
 
 # Read Kafka and s3 configuration
 if len(sys.argv) < 5:
-    print("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL> <TOPIC_NAME> <S3_BUCKET_NAME>")
+    logging.warning("- Usage: python data_producer.py <BOOTSTRAP_SERVERS> <SECURITY_PROTOCOL> <TOPIC_NAME> <S3_BUCKET_NAME>")
     sys.exit(1)
 
 bootstrap_servers = sys.argv[1]
@@ -40,9 +45,9 @@ def write_to_s3(json_data, key):
             Body=json.dumps(json_data),
             ContentType='application/json'
         )
-        print(f'Successfully wrote to S3: {key}')
+        logging.info('Successfully wrote to S3: ', key)
     except Exception as e:
-        print(f'Failed to write to S3: {str(e)}')
+        logging.info('Failed to write to S3: ', str(e))
 
 
 try:
