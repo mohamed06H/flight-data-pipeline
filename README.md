@@ -210,7 +210,7 @@ Or use a loop inside the script.
 
 ### Improve CI/CD
 The data producer and the kafka consumer scripts are both under the `/code` folder.
-The whole github repository is cloned when setting up the instances, which is a bad idea!
+The whole github repository is cloned when setting up the instances, which is not a good idea! (Totally against DevOps Best practices)
 
 **Solution:**
 
