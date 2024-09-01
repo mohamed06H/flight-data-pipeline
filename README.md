@@ -1,10 +1,11 @@
 # Option 2 - Streaming pipeline with Amazon Athena to query results
 ## Description
-What does your solution do? Which tech stack have you used?
 
-The project ingests data from Sky-scrapper API in streaming to find lists of flights in a specific route (Example London -> New York City on September 10th) 
+The project does data ingestion in streaming from Sky-scrapper API.
 
-Tech Stack:
+It requests lists of flights in a specific route (Example: London -> New York City on September 10th) 
+
+**_Tech Stack:_**
 - **Source API:** [Air Scraper API](https://rapidapi.com/apiheya/api/sky-scrapper) 
 - **Data Producer:** Python Script running as a cron job every minute on an EC2 instance
 - **Message broker:** Amazon MSK
@@ -28,7 +29,13 @@ Select any `Endpoint` -> Select `App` Tab -> Copy the value under `X-RapidAPI-Ke
 
 Locate yourself under the `terraform` directory
 
-Place your API key in `dev.auto.tfvars` and run the following commands:
+Place your API key in `dev.auto.tfvars` 
+
+The variable `global_prefix` is used to prefix all the resources that will be created. This is useful if you want to fastly identified the resources created for this specific use case.
+
+You can change the value of this variable in the `variables.tf` file.
+
+Run the following commands:
 
 ```bash
 aws configure  # enter your AWS credentials
@@ -213,7 +220,7 @@ The consumer should write the output json files into the S3 bucket through a **V
 
 ### Reduce costs
 If your use case requires lightweight data processing and a larger duration between messages, 
-you should consider using a serverless architecture (Lambda functions instead of EC2 instances) for a reduced cost and less management overhead.
+you should consider using a serverless architecture (Lambda functions instead of EC2 instances) for reduced costs and less management overhead.
 
 # Author
     Mohamed Hamiche
