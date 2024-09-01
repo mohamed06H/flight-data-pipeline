@@ -1,10 +1,11 @@
 # Option 2 - Streaming pipeline with Amazon Athena to query results
 ## Description
-What does your solution do? Which tech stack have you used?
 
-The project ingests data from Sky-scrapper API in streaming to find lists of flights in a specific route (Example London -> New York City on September 10th) 
+The project does data ingestion in streaming from Sky-scrapper API.
 
-Tech Stack:
+It requests lists of flights in a specific route (Example: London -> New York City on September 10th) 
+
+**_Tech Stack:_**
 - **Source API:** [Air Scraper API](https://rapidapi.com/apiheya/api/sky-scrapper) 
 - **Data Producer:** Python Script running as a cron job every minute on an EC2 instance
 - **Message broker:** Amazon MSK
@@ -28,7 +29,13 @@ Select any `Endpoint` -> Select `App` Tab -> Copy the value under `X-RapidAPI-Ke
 
 Locate yourself under the `terraform` directory
 
-Place your API key in `dev.auto.tfvars` and run the following commands:
+Place your API key in `dev.auto.tfvars` 
+
+The variable `global_prefix` is used to prefix all the resources that will be created. This is useful if you want to fastly identified the resources created for this specific use case.
+
+You can change the value of this variable in the `variables.tf` file.
+
+Run the following commands:
 
 ```bash
 aws configure  # enter your AWS credentials
@@ -38,7 +45,7 @@ terraform plan  # this is optional, it will show you what will be deployed - che
 terraform apply
 ```
 
-It will take around `25 minutes` to complete the deployment. You will see the following output:
+It will take around `35 minutes` to complete the deployment. You will see the following output:
 
 ```bash
 Apply complete! Resources: 34 added, 0 changed, 0 destroyed.
@@ -66,7 +73,7 @@ more bootstrap-servers
 kafka-topics.sh --list --bootstrap-server $(cat bootstrap-servers)
 
 # Consume messages through console: you should see a new message everytime the producer runs the cron job (every minute)
-kafka-console-consumer.sh  --bootstrap-server $(cat bootstrap-servers) --topic flight-kafka-topic
+kafka-console-consumer.sh --bootstrap-server $(cat bootstrap-servers) --topic flight-kafka-topic
 
 Outputs: 
 
@@ -131,12 +138,27 @@ Check the s3 output bucket on your account console:
 Once you are done with the testing, you can destroy the infrastructure by running the following command:
 
 ```bash
+# Delete the content of the output S3 bucket
+aws s3 rm s3://<your-global-prefix-json-data-bucket> --recursive
+
+# Delete all resources
 terraform destroy
 ```
 
 ## Design
 Provide a diagram of your solution, it can be the same one as in the pdf or one you've done yourself. Explain the diagram.
+![img.png](screenshots/diagram.png)
 
+Data Pipeline workflow:
+
+- The data producer script deployed on an EC2 instance (public subnet) requests the data from the Sky-scrapper API
+- The data producer publishes the responses into a kafka topic
+- The kafka consumer script deployed on a separate EC2 instance (public subnet) subscribes to the kakfa topic and writes back the responses to an S3 bucket.
+
+- AWS Crawler periodically scans the S3 bucket where the data is being stored, infers the schema of the stored data and creates/updates the metadata in the AWS Glue Data Catalog.
+- AWS Glue jobs (ETL Jobs) can be configured to run based on triggers (like the completion of the crawler)
+- The processed data can be stored back in another S3 bucket or in the same bucket but within a different directory or partition.
+- Amazon Athena is used to query the data stored in the S3 bucket.
 ## Developer Guide
 If I was to continue as a developer with the work you've just done, which things are essential for me to know in order to be able to do so?
 Can you provide with step-by-step assistance of what you've done so far with detailed screenshots? If something is not working as it should, this a good place to state that as well.
@@ -191,8 +213,8 @@ If you want to run the ingestion more frequently than 1 minute (every 15 seconds
 Or use a loop inside the script.
 
 ### Improve CI/CD
-The scripts needed to run the data producer and the kafka consumer are both under the `/code` folder.
-The whole github repository is cloned when setting up the instances, which is a bad idea!
+The data producer and the kafka consumer scripts are both under the `/code` folder.
+The whole github repository is cloned when setting up the instances, which is not a good idea! (Totally against DevOps Best practices)
 
 **Solution:**
 
@@ -213,7 +235,10 @@ The consumer should write the output json files into the S3 bucket through a **V
 
 ### Reduce costs
 If your use case requires lightweight data processing and a larger duration between messages, 
-you should consider using a serverless architecture (Lambda functions instead of EC2 instances) for a reduced cost and less management overhead.
+you should consider using a serverless architecture (Lambda functions instead of EC2 instances) for reduced costs and less management overhead.
+
+### Improve terraform configuration
+Split the main.tf file into several modules.
 
 # Author
     Mohamed Hamiche

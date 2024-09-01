@@ -22,7 +22,7 @@ git clone "${GITHUB_REPO_URL}" "${CLONE_DIR}"
 # Navigate to the cloned repository directory
 cd "${CLONE_DIR}" || exit
 
-git checkout develop # dev
+# git checkout develop # dev
 
 # Install requirements
 pip3 install -r code/consumer/requirements.txt

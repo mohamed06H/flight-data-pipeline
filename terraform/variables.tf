@@ -7,7 +7,7 @@ variable "region" {
 
 variable "global_prefix" {
   type    = string
-  default = "dsti-msk-test"
+  default = "dsti-msk-mohamed-hamiche"
 }
 
 variable "private_cidr_blocks" {
