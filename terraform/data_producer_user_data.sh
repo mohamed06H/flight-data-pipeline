@@ -32,7 +32,7 @@ git checkout develop # dev
 pip3 install -r code/producer/requirements.txt
 
 # Ensure the script is executable
-chmod +x code/producer/data_producer.py
+sudo chmod +x code/producer/data_producer.py
 
 # Run the script once to test it, passing the environment variables as arguments
 python3 code/producer/data_producer.py "${BOOTSTRAP_SERVERS}" "${SECURITY_PROTOCOL}" "${SKYSCANNER_API_KEY}" "${TOPIC_NAME}"
