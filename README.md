@@ -138,6 +138,10 @@ Check the s3 output bucket on your account console:
 Once you are done with the testing, you can destroy the infrastructure by running the following command:
 
 ```bash
+# Delete the content of the output S3 bucket
+aws s3 rm s3://<your-global-prefix-json-data-bucket> --recursive
+
+# Delete all resources
 terraform destroy
 ```
 
@@ -232,6 +236,9 @@ The consumer should write the output json files into the S3 bucket through a **V
 ### Reduce costs
 If your use case requires lightweight data processing and a larger duration between messages, 
 you should consider using a serverless architecture (Lambda functions instead of EC2 instances) for reduced costs and less management overhead.
+
+### Improve terraform configuration
+Split the main.tf file into several modules.
 
 # Author
     Mohamed Hamiche
