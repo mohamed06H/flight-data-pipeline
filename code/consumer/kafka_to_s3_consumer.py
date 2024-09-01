@@ -60,9 +60,9 @@ try:
         # Process the message
         json_message = json.loads(msg.value().decode('utf-8'))
 
-        # Generate S3 object key (filename)
-        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        s3_key = f"{timestamp}.json"
+        # Generate S3 object key (filename) with partitioned path
+        now = datetime.utcnow()
+        s3_key = f"year={now.year}/month={now.month:02}/day={now.day:02}/data_{now.strftime('%H%M%S%f')}.json"
 
         # Write the JSON message to S3
         write_to_s3(json_message, s3_key)
